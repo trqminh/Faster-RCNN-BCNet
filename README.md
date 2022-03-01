@@ -2,8 +2,8 @@ My custom detectron 2. Link to the Original repository: https://github.com/faceb
 
 ## Installation
 ```
-conda create -n bcnet python=3.7 -y
-source activate bcnet
+conda create -n dt2 python=3.7 -y
+source activate dt2 
 
 conda install pytorch==1.10.0 torchvision==0.11.0 cudatoolkit=11.3 -c pytorch
 pip install ninja yacs cython matplotlib tqdm
