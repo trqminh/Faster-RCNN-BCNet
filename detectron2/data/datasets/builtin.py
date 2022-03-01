@@ -245,6 +245,62 @@ def register_all_ade20k(root):
             ignore_label=255,
         )
 
+def register_kins():
+    try:
+        DatasetCatalog.get("kins_2_dataset_train")
+    except:
+        register_coco_instances("kins_2_dataset_train", {}, "/data/tqminh/AmodalSeg/std_data/KINS_2/annotations/instances_train_2017_new_coop.json", "/data/tqminh/AmodalSeg/std_data/KINS_2/train2017")
+    try:
+        DatasetCatalog.get("kins_2_dataset_val")
+    except:
+        register_coco_instances("kins_2_dataset_val", {}, "/data/tqminh/AmodalSeg/std_data/KINS_2/annotations/instances_val2017.json", "/data/tqminh/AmodalSeg/std_data/KINS_2/val2017")
+
+    try:
+        meta = MetadataCatalog.get('kins_2_dataset_train')
+        meta.thing_classes =['pedestrian']
+        meta = MetadataCatalog.get('kins_2_dataset_val')
+        meta.thing_classes =['pedestrian']
+    except:
+        pass
+
+    try:
+        DatasetCatalog.get("kins_dataset_train")
+    except:
+        register_coco_instances("kins_dataset_train", {}, "/data/tqminh/AmodalSeg/std_data/KINS/annotations/instances_train_2017_new_coop.json", "/data/tqminh/AmodalSeg/std_data/KINS/train2017")
+        # register_coco_instances("kins_dataset_train", {}, "/data/tqminh/AmodalSeg/std_data/KINS/annotations/instances_train_2017_transform_slight_correct.json", "/data/tqminh/AmodalSeg/std_data/KINS/train2017")
+    try:
+        DatasetCatalog.get("kins_dataset_val")
+    except:
+        register_coco_instances("kins_dataset_val", {}, "/data/tqminh/AmodalSeg/std_data/KINS/annotations/instances_val2017.json", "/data/tqminh/AmodalSeg/std_data/KINS/val2017")
+
+    try:
+        meta = MetadataCatalog.get('kins_dataset_train')
+        meta.thing_classes =['cyclist', 'pedestrian', 'car', 'tram',
+                                'truck', 'van', 'misc']
+        meta = MetadataCatalog.get('kins_dataset_val')
+        meta.thing_classes =['cyclist', 'pedestrian', 'car', 'tram',
+                                'truck', 'van', 'misc']
+    except:
+        pass
+
+def register_ahp():
+    try:
+        DatasetCatalog.get("ahp_dataset_train")
+    except:
+        register_coco_instances("ahp_dataset_train", {}, "/data/tqminh/AmodalSeg/std_data/AHP_coco_synthetic/annotations/instances_train_2017_new_coop.json", "/data/tqminh/AmodalSeg/std_data/AHP_coco_synthetic/train2017")
+        # register_coco_instances("kins_dataset_train", {}, "/data/tqminh/AmodalSeg/std_data/KINS/annotations/instances_train_2017_transform_slight_correct.json", "/data/tqminh/AmodalSeg/std_data/KINS/train2017")
+    try:
+        DatasetCatalog.get("ahp_dataset_val")
+    except:
+        register_coco_instances("ahp_dataset_val", {}, "/data/tqminh/AmodalSeg/std_data/AHP_coco/annotations/instances_val2017.json", "/data/tqminh/AmodalSeg/std_data/AHP_coco/val2017")
+
+    try:
+        meta = MetadataCatalog.get('ahp_dataset_train')
+        meta.thing_classes =['person', 'chair', 'tv']
+        meta = MetadataCatalog.get('ahp_dataset_val')
+        meta.thing_classes =['person']
+    except:
+        pass
 
 # True for open source;
 # Internally at fb, we register them elsewhere
@@ -257,3 +313,5 @@ if __name__.endswith(".builtin"):
     register_all_cityscapes_panoptic(_root)
     register_all_pascal_voc(_root)
     register_all_ade20k(_root)
+    register_kins()
+    register_ahp()
