@@ -20,5 +20,6 @@ from .wrappers import (
 from .blocks import CNNBlockBase, DepthwiseSeparableConv2d
 from .aspp import ASPP
 from .losses import ciou_loss, diou_loss
+from .boundary import get_instances_contour_interior
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]

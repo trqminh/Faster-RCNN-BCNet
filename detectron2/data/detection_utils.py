@@ -309,6 +309,38 @@ def transform_instance_annotations(
                 " COCO-style RLE as a dict.".format(type(segm))
             )
 
+    if "i_segmentation" in annotation:
+        # each instance contains 1 or more polygons
+        i_segm = annotation["i_segmentation"]
+        if isinstance(i_segm, list):
+            # polygons
+            polygons = [np.asarray(p).reshape(-1, 2) for p in i_segm]
+            annotation["i_segmentation"] = [
+                p.reshape(-1) for p in transforms.apply_polygons(polygons)
+            ]
+        elif isinstance(i_segm, dict):
+            # RLE
+            mask = mask_util.decode(i_segm)
+            mask = transforms.apply_segmentation(mask)
+            assert tuple(mask.shape[:2]) == image_size
+            annotation["i_segmentation"] = mask
+        else:
+            raise ValueError(
+                "Cannot transform segmentation of type '{}'!"
+                "Supported types are: polygons as list[list[float] or ndarray],"
+                " COCO-style RLE as a dict.".format(type(i_segm))
+            )
+
+    if "bg_object_segmentation" in annotation:
+        # each instance contains 1 or more polygons
+        bo_segm = annotation["bg_object_segmentation"]
+        if isinstance(bo_segm, list):
+            # polygons
+            bo_polygons = [np.asarray(p).reshape(-1, 2) for p in bo_segm]
+            annotation["bg_object_segmentation"] = [
+                p.reshape(-1) for p in transforms.apply_polygons(bo_polygons)
+            ]
+
     if "keypoints" in annotation:
         keypoints = transform_keypoint_annotations(
             annotation["keypoints"], transforms, image_size, keypoint_hflip_indices
@@ -398,9 +430,13 @@ def annotations_to_instances(annos, image_size, mask_format="polygon"):
 
     if len(annos) and "segmentation" in annos[0]:
         segms = [obj["segmentation"] for obj in annos]
+        bo_segms = [obj["bg_object_segmentation"] for obj in annos]
+        i_segms = [obj["i_segmentation"] for obj in annos]
         if mask_format == "polygon":
             try:
                 masks = PolygonMasks(segms)
+                bo_masks = PolygonMasks(bo_segms)
+                i_masks = PolygonMasks(i_segms)
             except ValueError as e:
                 raise ValueError(
                     "Failed to use mask_format=='polygon' from the given annotations!"
@@ -433,6 +469,8 @@ def annotations_to_instances(annos, image_size, mask_format="polygon"):
                 torch.stack([torch.from_numpy(np.ascontiguousarray(x)) for x in masks])
             )
         target.gt_masks = masks
+        target.gt_bo_masks = bo_masks
+        target.gt_i_masks = i_masks
 
     if len(annos) and "keypoints" in annos[0]:
         kpts = [obj.get("keypoints", []) for obj in annos]
