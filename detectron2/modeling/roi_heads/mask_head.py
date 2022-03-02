@@ -145,10 +145,14 @@ def mask_rcnn_loss(pred_mask_logits, pred_boundary_logits, instances, pred_mask_
     else:
         indices = torch.arange(total_num_masks)
         gt_classes = cat(gt_classes, dim=0)
-        pred_mask_logits = pred_mask_logits[indices, gt_classes]
+        pred_mask_logits_gt = pred_mask_logits[indices, gt_classes]
+        pred_bo_mask_logits = pred_mask_bo_logits[indices, gt_classes]
+        pred_boundary_logits_bo = pred_boundary_logits_bo[indices, gt_classes]
+        pred_boundary_logits = pred_boundary_logits[indices, gt_classes]
         if pred_a_mask_logits:
-            pred_a_mask_logits = pred_a_mask_logits[indices, gt_classes]
+            pred_a_mask_logits_gt = pred_a_mask_logits[indices, gt_classes]
 
+    
     if gt_masks.dtype == torch.bool:
         gt_masks_bool = gt_masks
     else:
@@ -222,10 +226,10 @@ def mask_rcnn_loss(pred_mask_logits, pred_boundary_logits, instances, pred_mask_
         )
 
     if use_i_mask:
-        bound_loss = L.JointLoss(L.BceLoss(), L.BceLoss())(
+        bound_loss = L.JointLoss(L.BalancedBCEWithLogitsLoss(), L.BalancedBCEWithLogitsLoss())(
             pred_boundary_logits.unsqueeze(1), gt_i_boundary.to(dtype=torch.float32))
     else:
-        bound_loss = L.JointLoss(L.BceLoss(), L.BceLoss())(
+        bound_loss = L.JointLoss(L.BalancedBCEWithLogitsLoss(), L.BalancedBCEWithLogitsLoss())(
             pred_boundary_logits.unsqueeze(1), gt_boundary.to(dtype=torch.float32))
 
     if new_gt_bo_masks.shape[0] > 0: 
@@ -236,7 +240,7 @@ def mask_rcnn_loss(pred_mask_logits, pred_boundary_logits, instances, pred_mask_
         bo_mask_loss = torch.tensor(0.0).cuda(mask_loss.get_device())
 
     if new_gt_bo_bounds.shape[0] > 0: 
-        bo_bound_loss = L.JointLoss(L.BceLoss(), L.BceLoss())(
+        bo_bound_loss = L.JointLoss(L.BalancedBCEWithLogitsLoss(), L.BalancedBCEWithLogitsLoss())(
             new_pred_bo_bounds_logits.unsqueeze(1), new_gt_bo_bounds.to(dtype=torch.float32))
     else:
         bo_bound_loss = torch.tensor(0.0).cuda(mask_loss.get_device())
@@ -293,6 +297,9 @@ def mask_rcnn_inference(pred_mask_logits, bo_mask_logits, bound_logits, bo_bound
         class_pred = cat([i.pred_classes for i in pred_instances])
         indices = torch.arange(num_masks, device=class_pred.device)
         mask_probs_pred = pred_mask_logits[indices, class_pred][:, None].sigmoid()
+        bound_probs_pred = bound_logits.sigmoid()
+        bo_mask_probs_pred = bo_mask_logits.sigmoid()
+        bo_bound_probs_pred = bo_bound_logits.sigmoid()
     # mask_probs_pred.shape: (B, 1, Hmask, Wmask)
 
     num_boxes_per_image = [len(i) for i in pred_instances]

@@ -9,7 +9,7 @@ from .keypoint_head import (
 from .mask_head import (
     ROI_MASK_HEAD_REGISTRY,
     build_mask_head,
-    BaseMaskRCNNHead,
+    # BaseMaskRCNNHead,
     MaskRCNNConvUpsampleHead,
 )
 from .roi_heads import (

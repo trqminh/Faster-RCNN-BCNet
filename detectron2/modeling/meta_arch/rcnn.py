@@ -119,7 +119,7 @@ class GeneralizedRCNN(nn.Module):
             storage.put_image(vis_name, vis_img)
             break  # only visualize one image in a batch
 
-    def forward(self, batched_inputs: List[Dict[str, torch.Tensor]]):
+    def forward(self, batched_inputs: List[Dict[str, torch.Tensor]], c_iter=None):
         """
         Args:
             batched_inputs: a list, batched outputs of :class:`DatasetMapper` .
@@ -160,7 +160,7 @@ class GeneralizedRCNN(nn.Module):
             proposals = [x["proposals"].to(self.device) for x in batched_inputs]
             proposal_losses = {}
 
-        _, detector_losses = self.roi_heads(images, features, proposals, gt_instances)
+        _, detector_losses = self.roi_heads(images, features, proposals, gt_instances, c_iter)
         if self.vis_period > 0:
             storage = get_event_storage()
             if storage.iter % self.vis_period == 0:

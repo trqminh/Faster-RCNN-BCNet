@@ -38,7 +38,7 @@ from .roi_heads import (
     ROI_MASK_HEAD_REGISTRY,
     ROIHeads,
     StandardROIHeads,
-    BaseMaskRCNNHead,
+    # BaseMaskRCNNHead,
     BaseKeypointRCNNHead,
     FastRCNNOutputLayers,
     build_box_head,

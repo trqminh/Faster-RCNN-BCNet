@@ -270,7 +270,7 @@ class SimpleTrainer(TrainerBase):
         """
         If you want to do something with the losses, you can wrap the model.
         """
-        loss_dict = self.model(data)
+        loss_dict = self.model(data, self.iter)
         if isinstance(loss_dict, torch.Tensor):
             losses = loss_dict
             loss_dict = {"total_loss": loss_dict}

@@ -20,7 +20,7 @@ from ..sampling import subsample_labels
 from .box_head import build_box_head
 from .fast_rcnn import FastRCNNOutputLayers
 from .keypoint_head import build_keypoint_head
-from .mask_head import build_mask_head
+from .mask_head import build_mask_head, mask_rcnn_inference, mask_rcnn_loss
 
 ROI_HEADS_REGISTRY = Registry("ROI_HEADS")
 ROI_HEADS_REGISTRY.__doc__ = """
@@ -725,10 +725,12 @@ class StandardROIHeads(ROIHeads):
         features: Dict[str, torch.Tensor],
         proposals: List[Instances],
         targets: Optional[List[Instances]] = None,
+        c_iter=None
     ) -> Tuple[List[Instances], Dict[str, torch.Tensor]]:
         """
         See :class:`ROIHeads.forward`.
         """
+        # This forward
         del images
         if self.training:
             assert targets, "'targets' argument is required during training"
@@ -740,7 +742,22 @@ class StandardROIHeads(ROIHeads):
             # Usually the original proposals used by the box head are used by the mask, keypoint
             # heads. But when `self.train_on_pred_boxes is True`, proposals will contain boxes
             # predicted by the box head.
-            losses.update(self._forward_mask(features, proposals))
+
+            mask_head_results, instances = self._forward_mask(features, proposals, c_iter)
+            mask_logits, boundary, bo_masks, bo_bound, mask_head_features = mask_head_results
+
+            loss_mask, loss_mask_bo, loss_boundary, loss_boundary_bo, loss_a_mask, loss_justify \
+                = mask_rcnn_loss(mask_logits, boundary, instances, bo_masks, bo_bound)
+
+            losses.update({
+                "loss_mask": loss_mask,
+                "loss_mask_bo": loss_mask_bo * 0.25,
+                "loss_boundary_bo": loss_boundary_bo * 0.5,
+                "loss_boundary": loss_boundary * 0.5,
+                "loss_a_mask": loss_a_mask,
+                "loss_justify": loss_justify
+            })
+            # losses.update(self._forward_mask(features, proposals))
             losses.update(self._forward_keypoint(features, proposals))
             return proposals, losses
         else:
@@ -815,7 +832,7 @@ class StandardROIHeads(ROIHeads):
             pred_instances, _ = self.box_predictor.inference(predictions, proposals)
             return pred_instances
 
-    def _forward_mask(self, features: Dict[str, torch.Tensor], instances: List[Instances]):
+    def _forward_mask(self, features: Dict[str, torch.Tensor], instances: List[Instances], c_iter=None):
         """
         Forward logic of the mask prediction branch.
 
@@ -843,7 +860,14 @@ class StandardROIHeads(ROIHeads):
             features = self.mask_pooler(features, boxes)
         else:
             features = {f: features[f] for f in self.mask_in_features}
-        return self.mask_head(features, instances)
+
+        if self.training:
+            return self.mask_head(features), instances
+        else:
+            mask_logits, boundary, bo_masks, bo_bound, mask_head_features = self.mask_head(features)
+            mask_rcnn_inference(mask_logits, bo_masks, boundary, bo_bound, instances)
+            return instances
+
 
     def _forward_keypoint(self, features: Dict[str, torch.Tensor], instances: List[Instances]):
         """
