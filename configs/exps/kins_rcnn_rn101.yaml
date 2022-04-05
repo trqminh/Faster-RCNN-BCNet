@@ -1,12 +1,5 @@
 _BASE_: '../COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml'
-OUTPUT_DIR: ../data/train_outputs/kins_fcos_rn101/
-# OUTPUT_DIR: ../data/train_outputs/test/
-# MODEL:
-#   QM_NET:
-#     USE: True
-#     JUSTIFY_LOSS: False
-#     POSE_ATN: True
-#   # WEIGHTS: /data/tqminh/AmodalSeg/train_outputs/ahp_fcos_qmnet_rn101_syn_model399_good/model_0039999.pth
+OUTPUT_DIR: train_outputs/kins_rcnn_rn101/
 SOLVER:
   WEIGHT_DECAY: 0.0001
   BASE_LR: 0.02
